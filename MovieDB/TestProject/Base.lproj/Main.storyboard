@@ -78,10 +78,6 @@
                                         </connections>
                                     </collectionViewCell>
                                 </cells>
-                                <connections>
-                                    <outlet property="dataSource" destination="BYZ-38-t0r" id="2fj-k3-7VE"/>
-                                    <outlet property="delegate" destination="BYZ-38-t0r" id="IrE-iF-yYD"/>
-                                </connections>
                             </collectionView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Jmj-kU-lfY">
                                 <rect key="frame" x="325" y="30" width="40" height="40"/>

@@ -17,10 +17,9 @@ class MovieListViewController: UIViewController {
     @IBOutlet weak var collectionView: UICollectionView!
 
     var movieListViewModel: MovieListViewModel?
-    fileprivate let movieCellId = "MovieCellId"
+ 
     fileprivate let segueId = "goToFilter"
-    fileprivate let placeHolderIcon = "placeholder.png"
-    fileprivate let movieDetailControllerID = "MovieDetailViewController"
+    
     private var page = 1
     private var gotData = false
     private var isFilterApplied = false
@@ -41,21 +40,16 @@ class MovieListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        movieListViewModel?.movieSuccess = { [weak self] () in
-            HUD.hide(view: self?.view)
-            self?.gotData = true
-            DispatchQueue.main.async {
-                self?.collectionView.reloadData()
-            }
-        }
-        movieListViewModel?.movieError = { [weak self] (error) in
-            guard error != nil else {
-                return
-            }
-            self?.showAlertInViewController(titleStr: Constant.Alert.title, messageStr: (error?.localizedDescription)! , okButtonTitle: Constant.Alert.ok)
-        }
+       configureController()
+       
+    }
+    
+    func configureController() {
+        handleMoviesServicesResponse()
         getStoresForPage(page: page)
-        
+        collectionView.delegate = movieListViewModel
+        collectionView.dataSource = movieListViewModel
+        handleMoveViewModelResponse()
     }
 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -78,40 +72,46 @@ extension MovieListViewController {
         movieListViewModel?.initFetch(url: mURL)
     }
     
+    func handleMoviesServicesResponse() {
+        movieListViewModel?.movieSuccess = { [weak self] () in
+            HUD.hide(view: self?.view)
+            self?.gotData = true
+            DispatchQueue.main.async {
+                self?.collectionView.reloadData()
+            }
+        }
+        movieListViewModel?.movieError = { [weak self] (error) in
+            guard error != nil else {
+                return
+            }
+            self?.showAlertInViewController(titleStr: Constant.Alert.title, messageStr: (error?.localizedDescription)! , okButtonTitle: Constant.Alert.ok)
+        }
+        
+        
+    }
+    
+    
+    
 }
 
-extension MovieListViewController: UICollectionViewDelegate, UICollectionViewDataSource, UIScrollViewDelegate {
+extension MovieListViewController {
     
-    // MARK: - UICollectionViewDataSource
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return movieListViewModel?.getTotalMovies() ?? 0
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: movieCellId, for: indexPath) as! MovieCollectionViewCell
-        if let movieVM = movieListViewModel?.getCellViewModel(at: indexPath) {
-            cell.titleLabel.text = movieVM.title
-            let url = movieVM.imageURL
-            cell.posterImgView.sd_setImage(with: URL(string: Constant.makeImagePath(url: url)), placeholderImage: UIImage(named: placeHolderIcon))
-        }
-        return cell
-        
-    }
-    
-    // MARK: - UICollectionViewDelegate
-    
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-
-        if let movieVM = movieListViewModel?.getCellViewModel(at: indexPath) {
-            let cell = collectionView.cellForItem(at: indexPath) as! MovieCollectionViewCell
-            if let controller = self.storyboard?.instantiateViewController(withIdentifier: movieDetailControllerID) as? MovieDetailViewController {
-                controller.movieDetailViewModel = MovieDetailViewModel(movieID: movieVM.id, movieImage: cell.posterImgView.image ?? UIImage(), apiService: MovieDetailAPI())
-                self.present(controller, animated: true, completion: nil)
+    func handleMoveViewModelResponse() {
+        movieListViewModel?.didSelectCell =  {(viewContoller) -> () in
+            if let viewCt = viewContoller {
+                self.present(viewCt, animated: true, completion: {
+                    
+                })
             }
         }
     }
+}
+
+extension MovieListViewController:  UIScrollViewDelegate {
+    
+    // MARK: - UICollectionViewDataSource
+    
+    
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let offsetY = scrollView.contentOffset.y

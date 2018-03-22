@@ -7,14 +7,19 @@
 //
 
 import Foundation
+import UIKit
 
-class MovieListViewModel {
+class MovieListViewModel : NSObject {
     
     //MARK: Instance
     private var dataAccessManager: MovieAPI?
     var movieSuccess: (() -> ())?
     var movieError: ((NetworkError?) -> ())?
     
+    var didSelectCell: ((MovieDetailViewController?) -> ())?
+       fileprivate let movieCellId = "MovieCellId"
+    fileprivate let placeHolderIcon = "placeholder.png"
+    fileprivate let movieDetailControllerID = "MovieDetailViewController"
     private var cellViewModels: [MovieViewModel] = [MovieViewModel]() {
         didSet {
             self.movieSuccess?()
@@ -63,6 +68,41 @@ class MovieListViewModel {
         }
         let total = self.cellViewModels + vms
         self.cellViewModels = total
+    }
+    
+
+}
+
+
+extension MovieListViewModel :  UICollectionViewDelegate, UICollectionViewDataSource {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return self.getTotalMovies()
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: movieCellId, for: indexPath) as! MovieCollectionViewCell
+        let movieVM = self.getCellViewModel(at: indexPath)
+        cell.titleLabel.text = movieVM.title
+        let url = movieVM.imageURL
+        cell.posterImgView.sd_setImage(with: URL(string: Constant.makeImagePath(url: url)), placeholderImage: UIImage(named: placeHolderIcon))
+        
+        return cell
+        
+    }
+    
+    // MARK: - UICollectionViewDelegate
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+                let movieVM = self.getCellViewModel(at: indexPath)
+                    let cell = collectionView.cellForItem(at: indexPath) as! MovieCollectionViewCell
+                    let storboard  = UIStoryboard.init(name: "Main", bundle: nil)
+                    if let controller = storboard.instantiateViewController(withIdentifier: movieDetailControllerID) as? MovieDetailViewController {
+                        controller.movieDetailViewModel = MovieDetailViewModel(movieID: movieVM.id, movieImage: cell.posterImgView.image ?? UIImage(), apiService: MovieDetailAPI())
+                        self.didSelectCell!(controller)
+                    }
+        
     }
     
 }
